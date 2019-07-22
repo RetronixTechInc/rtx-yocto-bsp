@@ -27,7 +27,9 @@ Each branch will have detailed READMEs describing exact syntax.
 Examples
 --------
 To download the Retronix_imx-4.9.88-2.0.0_ga i.MX6 release
-repo init -u https://github.com/RetronixTechInc -b PICO -m Retronix_imx-4.9.88-2.0.0_ga.xml
+mkdir rtx-yocto-bsp
+cd rtx-yocto-bsp
+repo init -u https://github.com/RetronixTechInc/rtx-yocto-bsp.git -b PICO -m Retronix_imx-4.9.88-2.0.0_ga.xml
 
 
 Setup the build folder for a BSP release:
