@@ -37,9 +37,9 @@ Setup the build folder for a BSP release:
 Note: The remaining instructions are for setting up a BSP release only. For setting
 up a demo, please see imx-manifest/README-<demo> for further instructions.
 
-$: [MACHINE=<machine>] [DISTRO=fsl-imx-<backend>] source ./fsl-setup-release.sh -b bld-<backend>
+$: [MACHINE=<machine>] [DISTRO=<distro>] source rtx-setup-release.sh -b bld-<backend>
 
-<machine> defaults to imx6qsabresd
+<machine> defaults to imx6q-ohga
 
 <backend>   Graphics backend type
 xwayland    Wayland with X11 support - default distro
@@ -51,8 +51,9 @@ Note if the poky community distro is used then build breaks will happen with som
 components using our meta-fsl-bsp-release layer.
 
 Examples:
-- Setup for XWayland.
-$: MACHINE=imx7ulpevk DISTRO=fsl-imx-xwayland source ./fsl-setup-release.sh -b bld-xwayland
+- Setup for X11.
+$: DISTRO=ohga-x11 MACHINE=imx6q-ohga source rtx-setup-release.sh -b build-x11
+
 
 Build an image:
 ---------------
