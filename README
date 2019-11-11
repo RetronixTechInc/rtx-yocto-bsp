@@ -1,4 +1,4 @@
-##Building in Ubuntu 16.04
+## Building in Ubuntu 16.04
 i.MX Repo Manifest README 
 
 This repo is used to download manifests for i.MX BSP releases.
@@ -71,4 +71,13 @@ L4.9.88_2.0.0 for Linux BSP Documentation:
 ------------------------------------------------
 Note: Includes Release Notes, User Guide.
 https://community.nxp.com/external-link.jspa?url=https%3A%2F%2Fwww.nxp.com%2Fwebapp%2FDownload%3FcolCode%3DL4.9.88_2.0.0_LINUX_DOCS%26Parent_nodeId%3D1337699481071706174845%26Parent_pageType%3Dproduct
+ 
+ 
+ 
+ ## Building in Ubuntu 18.04
+ 1.Create linux-firmware_%.bbappend file in sources/meta-rtx-arm/recipes-pcba/linux-firmware fold.
+ The file content is RDEPENDS_${PN} = "perl"
+ 2.Building the image that The u-boot can't auto create.
+ You can Manual build it => bitbake u-boot-rtx
+ 
  
