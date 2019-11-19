@@ -77,7 +77,6 @@ https://community.nxp.com/external-link.jspa?url=https%3A%2F%2Fwww.nxp.com%2Fweb
  ## Building in Ubuntu 18.04
  1.Create linux-firmware_%.bbappend file in sources/meta-rtx-arm/recipes-pcba/linux-firmware fold.
  The file content is RDEPENDS_${PN} = "perl"
- 2.Building the image that The u-boot can't auto create.
- You can Manual build it => bitbake u-boot-rtx
+
  
  
