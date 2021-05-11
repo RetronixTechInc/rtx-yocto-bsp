@@ -30,7 +30,7 @@ Examples
 To download the Retronix_imx-4.14.98-2.0.0_ga i.MX8 release
 mkdir rtx-yocto-bsp
 cd rtx-yocto-bsp
-repo init -u https://github.com/RetronixTechInc/rtx-yocto-bsp.git -b iMX8_CSE_Pit-REXiMX8_CSE_Pit-REX -m Retronix_imx-4.14.98-2.0.0_ga.xml
+repo init -u https://github.com/RetronixTechInc/rtx-yocto-bsp.git -b iMX8_CSE_Pit-REX -m Retronix_imx-4.14.98-2.0.0_ga.xml
 repo sync
 
 Setup the build folder for a BSP release:
