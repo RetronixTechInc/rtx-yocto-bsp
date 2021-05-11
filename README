@@ -1,4 +1,4 @@
-## Building in Ubuntu 16.04
+## Building in Ubuntu 18.04
 i.MX Repo Manifest README 
 
 This repo is used to download manifests for i.MX BSP releases.
@@ -27,10 +27,10 @@ Each branch will have detailed READMEs describing exact syntax.
 
 Examples
 --------
-To download the Retronix_imx-4.9.88-2.0.0_ga i.MX6 release
+To download the Retronix_imx-5.4.70-2.3.0 i.MX6 release
 mkdir rtx-yocto-bsp
 cd rtx-yocto-bsp
-repo init -u https://github.com/RetronixTechInc/rtx-yocto-bsp.git -b PICO -m Retronix_imx-4.9.88-2.0.0_ga.xml
+repo init -u https://github.com/RetronixTechInc/rtx-yocto-bsp.git -b iMX6Q_PICO_5.4.70 -m Retronix_imx-5.4.70-2.3.0.xml
 repo sync
 
 Setup the build folder for a BSP release:
@@ -45,38 +45,15 @@ $: [MACHINE=<machine>] [DISTRO=<distro>] source rtx-setup-release.sh -b bld-<bac
 <backend>   Graphics backend type
 xwayland    Wayland with X11 support - default distro
 wayland     Wayland
-x11         X11  (not supported for mx8)
-fb          Framebuffer (not supported for mx8)
-
-Note if the poky community distro is used then build breaks will happen with some
-components using our meta-fsl-bsp-release layer.
 
 Examples:
-- Setup for X11.
-$: DISTRO=ohga-x11 MACHINE=imx6q-ohga source rtx-setup-release.sh -b build-x11
-
+- Setup for xwayland.
+$: DISTRO=fsl-imx-xwayland MACHINE=imx6q-ohga source sources/meta-rtx-arm/tool/rtx-setup-release.sh -b build_5470_xwayland
 
 Build an image:
 ---------------
 bitbake <image recipe>
 
-Some image recipes:
-fsl-image-gui - full image with demos and tests used for testing with graphics, no QT.
-fsl-image-qt5 - fsl-image-gui with QT 5.9.
-
 Examples:
-bitbake rtx-image-qt5
-
-L4.9.88_2.0.0 for Linux BSP Documentation:
-------------------------------------------------
-Note: Includes Release Notes, User Guide.
-https://community.nxp.com/external-link.jspa?url=https%3A%2F%2Fwww.nxp.com%2Fwebapp%2FDownload%3FcolCode%3DL4.9.88_2.0.0_LINUX_DOCS%26Parent_nodeId%3D1337699481071706174845%26Parent_pageType%3Dproduct
- 
- 
- 
- ## Building in Ubuntu 18.04
- 1.Create linux-firmware_%.bbappend file in sources/meta-rtx-arm/recipes-pcba/linux-firmware fold.
- The file content is RDEPENDS_${PN} = "perl"
-
- 
+bitbake rtx-image-multimedia
  
