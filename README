@@ -34,7 +34,7 @@ Examples
 To download the Retronix_imx-5.4.70-2.3.0 i.MX6 release
 mkdir rtx-yocto-bsp
 cd rtx-yocto-bsp
-repo init -u https://github.com/RetronixTechInc/rtx-yocto-bsp.git -b iMX6Q_PICO_5.4.70 -m Retronix_imx-5.4.70-2.3.0.xml
+repo init -u https://github.com/RetronixTechInc/rtx-yocto-bsp.git -b iMX6Q_PICO_demo1 -m Retronix_imx-5.4.70-2.3.0.xml
 repo sync
 
 Setup the build folder for a BSP release:
