@@ -1,0 +1,268 @@
+---
+ ...22.04.bb => u-boot-imx-mfgtool_2015.04.bb} |  0
+ .../u-boot/u-boot-imx-tools_2022.04.bb        | 45 ----------
+ .../0001-modify-for-kernel-5.15-version.patch | 89 +++++++++++++++++++
+ .../recipes-bsp/u-boot/u-boot-imx_2015.04.bb  | 33 +++++++
+ .../recipes-bsp/u-boot/u-boot-imx_2022.04.bb  | 57 ------------
+ 5 files changed, 122 insertions(+), 102 deletions(-)
+ rename meta-bsp/recipes-bsp/u-boot/{u-boot-imx-mfgtool_2022.04.bb => u-boot-imx-mfgtool_2015.04.bb} (100%)
+ delete mode 100644 meta-bsp/recipes-bsp/u-boot/u-boot-imx-tools_2022.04.bb
+ create mode 100644 meta-bsp/recipes-bsp/u-boot/u-boot-imx/0001-modify-for-kernel-5.15-version.patch
+ create mode 100644 meta-bsp/recipes-bsp/u-boot/u-boot-imx_2015.04.bb
+ delete mode 100644 meta-bsp/recipes-bsp/u-boot/u-boot-imx_2022.04.bb
+
+diff --git a/meta-bsp/recipes-bsp/u-boot/u-boot-imx-mfgtool_2022.04.bb b/meta-bsp/recipes-bsp/u-boot/u-boot-imx-mfgtool_2015.04.bb
+similarity index 100%
+rename from meta-bsp/recipes-bsp/u-boot/u-boot-imx-mfgtool_2022.04.bb
+rename to meta-bsp/recipes-bsp/u-boot/u-boot-imx-mfgtool_2015.04.bb
+diff --git a/meta-bsp/recipes-bsp/u-boot/u-boot-imx-tools_2022.04.bb b/meta-bsp/recipes-bsp/u-boot/u-boot-imx-tools_2022.04.bb
+deleted file mode 100644
+index a1aec8e54e..0000000000
+--- a/meta-bsp/recipes-bsp/u-boot/u-boot-imx-tools_2022.04.bb
++++ /dev/null
+@@ -1,45 +0,0 @@
+-require recipes-bsp/u-boot/u-boot-tools.inc
+-require recipes-bsp/u-boot/u-boot-imx-common_${PV}.inc
+-
+-DEPENDS += "gnutls util-linux"
+-
+-PROVIDES:append:class-target = " ${MLPREFIX}u-boot-tools"
+-PROVIDES:append:class-native = " u-boot-tools-native"
+-PROVIDES:append:class-nativesdk = " nativesdk-u-boot-tools"
+-
+-do_compile () {
+-	# Yes, this is crazy. If you build on a system with git < 2.14 from scratch, the tree will
+-	# be marked as "dirty" and the version will include "-dirty", leading to a reproducibility problem.
+-	# The issue is the inode count for Licnses/README changing due to do_populate_lic hardlinking a
+-	# copy of the file. We avoid this by ensuring the index is updated with a "git diff" before the
+-	# u-boot machinery tries to determine the version.
+-	#
+-	# build$ ../git/scripts/setlocalversion ../git
+-	# ""
+-	# build$ ln ../git/
+-	# build$ ln ../git/README ../foo
+-	# build$ ../git/scripts/setlocalversion ../git
+-	# ""-dirty
+-	# (i.e. creating a hardlink dirties the index)
+-	cd ${S}; git diff; cd ${B}
+-
+-	oe_runmake -C ${S} tools-only_defconfig O=${B}
+-
+-	# Disable CONFIG_CMD_LICENSE, license.h is not used by tools and
+-	# generating it requires bin2header tool, which for target build
+-	# is built with target tools and thus cannot be executed on host.
+-	sed -i -e "s/CONFIG_CMD_LICENSE=.*/# CONFIG_CMD_LICENSE is not set/" ${SED_CONFIG_EFI} ${B}/.config
+-
+-	oe_runmake -C ${S} cross_tools NO_SDL=1 O=${B}
+-}
+-
+-do_install:append () {
+-	# mkeficapsule
+-	install -m 0755 tools/mkeficapsule ${D}${bindir}/uboot-mkeficapsule
+-	ln -sf uboot-mkeficapsule ${D}${bindir}/mkeficapsule
+-}
+-
+-FILES:${PN} += "${bindir}/uboot-mkeficapsule ${bindir}/mkeficapsule"
+-
+-PACKAGE_ARCH = "${MACHINE_ARCH}"
+-COMPATIBLE_MACHINE:class-target = "(imx-generic-bsp)"
+diff --git a/meta-bsp/recipes-bsp/u-boot/u-boot-imx/0001-modify-for-kernel-5.15-version.patch b/meta-bsp/recipes-bsp/u-boot/u-boot-imx/0001-modify-for-kernel-5.15-version.patch
+new file mode 100644
+index 0000000000..9dc1b8d7dd
+--- /dev/null
++++ b/meta-bsp/recipes-bsp/u-boot/u-boot-imx/0001-modify-for-kernel-5.15-version.patch
+@@ -0,0 +1,89 @@
++---
++ board/retronix/rtx_adlink_mx6dl/Kconfig                      | 4 ++--
++ build.sh                                                     | 7 ++++---
++ configs/rtx_adlink_mx6dl_micro1g_dtb_rtx_all_linux_defconfig | 2 +-
++ include/linux/compiler-gcc.h                                 | 2 ++
++ 4 files changed, 9 insertions(+), 6 deletions(-)
++
++diff --git a/board/retronix/rtx_adlink_mx6dl/Kconfig b/board/retronix/rtx_adlink_mx6dl/Kconfig
++index 18e0c52..c31353b 100644
++--- a/board/retronix/rtx_adlink_mx6dl/Kconfig
+++++ b/board/retronix/rtx_adlink_mx6dl/Kconfig
++@@ -123,13 +123,13 @@ config VGA_VIDEO
++ 
++ config DEF_LOADADDR
++ 	hex "loadaddr"
++-	default "0x10880000"
+++	default "0x12000000"
++ 	help
++ 	  loadaddr.
++ 
++ config DTB_LOADADDR
++ 	hex "dtb_loadaddr"
++-	default "0x10800000"
+++	default "0x18000000"
++ 	help
++ 	  dtb_loadaddr.
++ 
++diff --git a/build.sh b/build.sh
++index 64720e3..9bf0dac 100755
++--- a/build.sh
+++++ b/build.sh
++@@ -24,7 +24,8 @@ fi
++ #export CROSS_COMPILE=${CROSS_COMPILE_PATH}/rtx-gcc-4.9.3-glibc-2.19-hf-64bits/arm-rtx-linux-gnueabihf/bin/arm-rtx-linux-gnueabihf-
++ #export CROSS_COMPILE=${CROSS_COMPILE_PATH}/rtx-gcc-4.9.3-glibc-2.23-hf-64bits/arm-rtx-linux-gnueabihf/bin/arm-rtx-linux-gnueabihf-
++ #export CROSS_COMPILE=${CROSS_COMPILE_PATH}/rtx-gcc-4.9.3-glibc-2.23-hf/arm-rtx-linux-gnueabihf/bin/arm-rtx-linux-gnueabihf- 
++-export CROSS_COMPILE=${CROSS_COMPILE_PATH}/rtx-gcc-5.3.0-glibc-2.23-hf/arm-rtx-linux-gnueabihf/bin/arm-rtx-linux-gnueabihf-
+++#export CROSS_COMPILE=${CROSS_COMPILE_PATH}/rtx-gcc-5.3.0-glibc-2.23-hf/arm-rtx-linux-gnueabihf/bin/arm-rtx-linux-gnueabihf-
+++export CROSS_COMPILE=${CROSS_COMPILE_PATH}/gcc-arm-11.2-2022.02-x86_64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf-
++ #export CROSS_COMPILE=${CROSS_COMPILE_PATH}/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
++ #export CROSS_COMPILE=${CROSS_COMPILE_PATH}/android/arm-eabi-4.8/bin/arm-eabi-
++ #export CROSS_COMPILE=${CROSS_COMPILE_PATH}/android/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
++@@ -37,7 +38,7 @@ export CROSS_COMPILE=${CROSS_COMPILE_PATH}/rtx-gcc-5.3.0-glibc-2.23-hf/arm-rtx-l
++ #U_BOOT_DEFAULT_CONFIG=advantech_rom7420_mx6q_samsung1g_dtb_microprogram_all_linux_defconfig
++ 
++ #ADLINK Board
++-#U_BOOT_DEFAULT_CONFIG=rtx_adlink_mx6dl_micro1g_dtb_rtx_all_linux_defconfig
+++U_BOOT_DEFAULT_CONFIG=rtx_adlink_mx6dl_micro1g_dtb_rtx_all_linux_defconfig
++ 
++ # A6 PLUS board
++ #U_BOOT_DEFAULT_CONFIG=rtx_a6plus_mx6q_micro1g_null_roymark_box_android_defconfig
++@@ -62,7 +63,7 @@ export CROSS_COMPILE=${CROSS_COMPILE_PATH}/rtx-gcc-5.3.0-glibc-2.23-hf/arm-rtx-l
++ 
++ #PITX+ Board
++ #U_BOOT_DEFAULT_CONFIG=rtx_pitxP_mx6q_nanya1g_dtb_rtx_all_linux_defconfig
++-U_BOOT_DEFAULT_CONFIG=rtx_pitxP_mx6q_micro2g_dtb_rtx_all_linux_defconfig
+++#U_BOOT_DEFAULT_CONFIG=rtx_pitxP_mx6q_micro2g_dtb_rtx_all_linux_defconfig
++ 
++ #Q7 Board
++ #U_BOOT_DEFAULT_CONFIG=rtx_q7_mx6q_issi1g_dtb_rtx_all_android_defconfig
++diff --git a/configs/rtx_adlink_mx6dl_micro1g_dtb_rtx_all_linux_defconfig b/configs/rtx_adlink_mx6dl_micro1g_dtb_rtx_all_linux_defconfig
++index f99bc65..8fe68b0 100644
++--- a/configs/rtx_adlink_mx6dl_micro1g_dtb_rtx_all_linux_defconfig
+++++ b/configs/rtx_adlink_mx6dl_micro1g_dtb_rtx_all_linux_defconfig
++@@ -8,7 +8,7 @@ CONFIG_DM_THERMAL=y
++ CONFIG_EXTRA_ENV_USE_DTB=y
++ CONFIG_BOOTARGS_GEN="init=/sbin/init ${mmcrootpath};if test -n ${mac1_val};then setenv bootargs ${bootargs} fec_mac=${mac1_val};fi;if test -n ${mac2_val};then setenv bootargs ${bootargs} smsc_mac=${mac2_val};fi;"
++ CONFIG_MMCROOTPATH="root=/dev/mmcblk0p1 rootwait rw"
++-CONFIG_BOOTARGS_HDMI="video=mxcfb0:dev=hdmi,1920x1080M@60,if=RGB24,bpp=32"
+++CONFIG_BOOTARGS_HDMI="video=mxcfb2:dev=hdmi,1920x1080M@60,if=RGB24,bpp=32"
++ CONFIG_BOOTARGS_VGA="video=mxcfb0:dev=ldb,LDB-FUHD,if=RGB24,bpp=32 video=mxcfb1:off video=mxcfb2:off"
++ CONFIG_BOOTARGS_DUAL_HDMI="video=mxcfb1:dev=hdmi,1920x1080M@60,if=RGB24,bpp=32 video=mxcfb0:dev=ldb,1024x600@60,if=RGB666,bpp=32 video=mxcfb2:off"
++ CONFIG_BOOTARGS_GUIMEM="fbmem=28M,28M gpumem=176M vmalloc=400M ldb=spl0"
++diff --git a/include/linux/compiler-gcc.h b/include/linux/compiler-gcc.h
++index e057bd2..085f118 100644
++--- a/include/linux/compiler-gcc.h
+++++ b/include/linux/compiler-gcc.h
++@@ -111,7 +111,9 @@
++ #define __gcc_header(x) #x
++ #define _gcc_header(x) __gcc_header(linux/compiler-gcc##x.h)
++ #define gcc_header(x) _gcc_header(x)
+++#if (__GNUC__ < 8)
++ #include gcc_header(__GNUC__)
+++#endif
++ 
++ #if !defined(__noclone)
++ #define __noclone	/* not needed */
++-- 
++2.7.4
++
+diff --git a/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2015.04.bb b/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2015.04.bb
+new file mode 100644
+index 0000000000..632441365b
+--- /dev/null
++++ b/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2015.04.bb
+@@ -0,0 +1,33 @@
++# Copyright (C) 2013-2016 Freescale Semiconductor
++
++DESCRIPTION = "U-Boot provided by Freescale with focus on  i.MX reference boards."
++require recipes-bsp/u-boot/u-boot.inc
++
++PROVIDES += "u-boot"
++
++LICENSE = "GPLv2+"
++LIC_FILES_CHKSUM = "file://Licenses/gpl-2.0.txt;md5=b234ee4d69f5fce4486a80fdaf4a4263"
++
++
++SRC_URI = "${UBOOT_SRC};branch=${SRCBRANCH}"
++UBOOT_SRC ?= "git://github.com/RetronixTechInc/u-boot-rtx.git;protocol=https"
++SRCBRANCH = "RTX_2015.04"
++SRCREV = "5159ddf64bb74dc6bac24594b0c276d076725cac"
++LOCALVERSION = "-${SRCBRANCH}"
++
++SRC_URI += " \
++		file://0001-modify-for-kernel-5.15-version.patch \
++	"
++
++UBOOT_CONFIG ??= "adlink"
++UBOOT_CONFIG[adlink] = "rtx_adlink_mx6dl_micro1g_dtb_rtx_all_linux_defconfig"
++
++UBOOT_INITIAL_ENV = ""
++
++inherit fsl-u-boot-localversion
++
++S = "${WORKDIR}/git"
++B = "${WORKDIR}/build"
++
++PACKAGE_ARCH = "${MACHINE_ARCH}"
++COMPATIBLE_MACHINE = "(mx6-generic-bsp|mx7-generic-bsp|mx8-generic-bsp|mx9-generic-bsp)"
+diff --git a/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2022.04.bb b/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2022.04.bb
+deleted file mode 100644
+index c4c9a9dc0e..0000000000
+--- a/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2022.04.bb
++++ /dev/null
+@@ -1,57 +0,0 @@
+-# Copyright (C) 2013-2016 Freescale Semiconductor
+-# Copyright 2018 (C) O.S. Systems Software LTDA.
+-# Copyright 2017-2022 NXP
+-
+-require recipes-bsp/u-boot/u-boot.inc
+-require recipes-bsp/u-boot/u-boot-imx-common_${PV}.inc
+-
+-###############################################################
+-# BEGIN: Changes to u-boot-imx-common_${PV}.inc
+-
+-LIC_FILES_CHKSUM = "file://Licenses/gpl-2.0.txt;md5=b234ee4d69f5fce4486a80fdaf4a4263"
+-
+-SRC_URI = "${UBOOT_SRC};branch=${SRCBRANCH}"
+-UBOOT_SRC ?= "git://github.com/nxp-imx/uboot-imx.git;protocol=https"
+-SRCBRANCH = "lf_v2022.04"
+-SRCREV = "181859317bfafef1da79c59a4498650168ad9df6"
+-LOCALVERSION = "-${SRCBRANCH}"
+-
+-DEPENDS += "gnutls-native xxd-native"
+-
+-# END: Changes to u-boot-imx-common_${PV}.inc
+-###############################################################
+-
+-PROVIDES += "u-boot"
+-
+-inherit uuu_bootloader_tag
+-
+-UUU_BOOTLOADER             = ""
+-UUU_BOOTLOADER:mx6-nxp-bsp = "${UBOOT_BINARY}"
+-UUU_BOOTLOADER:mx7-nxp-bsp = "${UBOOT_BINARY}"
+-UUU_BOOTLOADER_TAGGED             = ""
+-UUU_BOOTLOADER_TAGGED:mx6-nxp-bsp = "u-boot-tagged.${UBOOT_SUFFIX}"
+-UUU_BOOTLOADER_TAGGED:mx7-nxp-bsp = "u-boot-tagged.${UBOOT_SUFFIX}"
+-
+-do_deploy:append:mx8m-nxp-bsp() {
+-    # Deploy u-boot-nodtb.bin and fsl-imx8m*-XX.dtb for mkimage to generate boot binary
+-    if [ -n "${UBOOT_CONFIG}" ]
+-    then
+-        for config in ${UBOOT_MACHINE}; do
+-            i=$(expr $i + 1);
+-            for type in ${UBOOT_CONFIG}; do
+-                j=$(expr $j + 1);
+-                if [ $j -eq $i ]
+-                then
+-                    install -d ${DEPLOYDIR}/${BOOT_TOOLS}
+-                    install -m 0777 ${B}/${config}/arch/arm/dts/${UBOOT_DTB_NAME}  ${DEPLOYDIR}/${BOOT_TOOLS}
+-                    install -m 0777 ${B}/${config}/u-boot-nodtb.bin  ${DEPLOYDIR}/${BOOT_TOOLS}/u-boot-nodtb.bin-${MACHINE}-${type}
+-                fi
+-            done
+-            unset  j
+-        done
+-        unset  i
+-    fi
+-}
+-
+-PACKAGE_ARCH = "${MACHINE_ARCH}"
+-COMPATIBLE_MACHINE = "(mx6-generic-bsp|mx7-generic-bsp|mx8-generic-bsp|mx9-generic-bsp)"
+-- 
+2.17.1
+

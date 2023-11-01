@@ -1,0 +1,39 @@
+---
+ .../weston-init/imx-nxp-bsp/weston.ini        | 24 +++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/meta-bsp/recipes-graphics/wayland/weston-init/imx-nxp-bsp/weston.ini b/meta-bsp/recipes-graphics/wayland/weston-init/imx-nxp-bsp/weston.ini
+index a58b6e1ff7..4fe4d45b8a 100644
+--- a/meta-bsp/recipes-graphics/wayland/weston-init/imx-nxp-bsp/weston.ini
++++ b/meta-bsp/recipes-graphics/wayland/weston-init/imx-nxp-bsp/weston.ini
+@@ -30,3 +30,27 @@ touchscreen_calibrator=true
+ [screen-share]
+ command=@bindir@/weston --backend=rdp-backend.so --shell=fullscreen-shell.so --no-clients-resize --rdp-tls-cert=/etc/freerdp/keys/server.crt --rdp-tls-key=/etc/freerdp/keys/server.key
+ #start-on-startup=true
++
++[launcher]
++icon=/usr/share/icons/apps/terminal_24x24.png
++path=/usr/bin/weston-terminal
++
++[launcher]
++icon=/usr/share/icons/hicolor/24x24/apps/chromium.png
++path=/usr/bin/chromium.sh
++
++[launcher]
++icon=/usr/share/icons/apps/mp_24x24.png
++path=/usr/bin/mp_sl
++
++[launcher]
++icon=/usr/share/icons/apps/touch_cal_24x24.png
++path=/usr/bin/weston-touch-calibrator.sh
++
++[launcher]
++icon=/usr/share/icons/apps/ffffff00_24x24.png
++path=/
++
++[launcher]
++icon=/usr/share/icons/apps/touch_24x24.png
++path=/usr/bin/reset_touch
+-- 
+2.17.1
+

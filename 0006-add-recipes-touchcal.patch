@@ -1,0 +1,95 @@
+---
+ .../touchcal-01/weston-touch-calibrator.sh    | 43 +++++++++++++++++++
+ .../recipes-touchcal/touch_cal/touchcal_01.bb | 30 +++++++++++++
+ 2 files changed, 73 insertions(+)
+ create mode 100644 meta-bsp/recipes-touchcal/touch_cal/touchcal-01/weston-touch-calibrator.sh
+ create mode 100644 meta-bsp/recipes-touchcal/touch_cal/touchcal_01.bb
+
+diff --git a/meta-bsp/recipes-touchcal/touch_cal/touchcal-01/weston-touch-calibrator.sh b/meta-bsp/recipes-touchcal/touch_cal/touchcal-01/weston-touch-calibrator.sh
+new file mode 100644
+index 0000000000..752e954854
+--- /dev/null
++++ b/meta-bsp/recipes-touchcal/touch_cal/touchcal-01/weston-touch-calibrator.sh
+@@ -0,0 +1,43 @@
++#!/bin/sh
++
++#CALVAL="1.051360 -0.003640 -0.030474 0.016130 1.112044 -0.074869"
++
++FILE=/etc/udev/rules.d/touchscreen.rules
++CALVAL=$(timeout 30s /usr/bin/weston-touch-calibrator -v /dev/fb0)
++
++CALVAL=$(echo $CALVAL | awk '{ print $3" "$4" "$5" "$6" "$7" "$8}')
++
++if [ -f $FILE ]; then
++	if [  "x$CALVAL" = "x     " ]; then
++		:
++	else
++		sed -i '/LIBINPUT_CALIBRATION_MATRIX/d' $FILE
++		echo -e "SUBSYSTEM==\"input\", KERNEL==\"event[0-9]*\", ENV{ID_INPUT_TOUCHSCREEN}==\"1\", ENV{LIBINPUT_CALIBRATION_MATRIX}=\"$CALVAL\""	>> $FILE
++	fi
++	sync
++else
++	echo -e "# There are a number of modifiers that are allowed to be used in some"								>> $FILE
++	echo -e "# of the different fields. They provide the following subsitutions:"								>> $FILE
++	echo -e "#"																>> $FILE
++	echo -e "# %n the \"kernel number\" of the device."											>> $FILE
++	echo -e "#    For example, 'sda3' has a \"kernel number\" of '3'"									>> $FILE
++	echo -e "# %e the smallest number for that name which does not matches an existing node"						>> $FILE
++	echo -e "# %k the kernel name for the device"												>> $FILE
++	echo -e "# %M the kernel major number for the device"											>> $FILE
++	echo -e "# %m the kernel minor number for the device"											>> $FILE
++	echo -e "# %b the bus id for the device"												>> $FILE
++	echo -e "# %c the string returned by the PROGRAM"											>> $FILE
++	echo -e "# %s{filename} the content of a sysfs attribute"										>> $FILE
++	echo -e "# %% the '%' char itself"													>> $FILE
++	echo -e "#"																>> $FILE
++	echo -e ""																>> $FILE
++	echo -e "# Create a symlink to any touchscreen input device"										>> $FILE
++	echo -e "SUBSYSTEM==\"input\", KERNEL==\"event[0-9]*\", ATTRS{modalias}==\"input:*-e0*,3,*a0,1,*18,*\", SYMLINK+=\"input/touchscreen0\"">> $FILE
++	echo -e "SUBSYSTEM==\"input\", KERNEL==\"event[0-9]*\", ATTRS{modalias}==\"ads7846\", SYMLINK+=\"input/touchscreen0\""			>> $FILE
++	echo -e "# i.MX specific touchscreen rules"												>> $FILE
++	echo -e "SUBSYSTEM==\"input\", KERNEL==\"event[0-9]*\", ENV{ID_INPUT_TOUCHSCREEN}==\"1\", SYMLINK+=\"input/touchscreen0\""		>> $FILE
++	echo -e "SUBSYSTEM==\"input\", KERNEL==\"event[0-9]*\", ENV{ID_INPUT_TOUCHSCREEN}==\"1\", ENV{LIBINPUT_CALIBRATION_MATRIX}=\"$CALVAL\""	>> $FILE
++fi
++
++sync
++sync
+diff --git a/meta-bsp/recipes-touchcal/touch_cal/touchcal_01.bb b/meta-bsp/recipes-touchcal/touch_cal/touchcal_01.bb
+new file mode 100644
+index 0000000000..c865e28ba2
+--- /dev/null
++++ b/meta-bsp/recipes-touchcal/touch_cal/touchcal_01.bb
+@@ -0,0 +1,30 @@
++# Copyright (C) 2017-2018 RTX-3110
++
++SUMMARY = "touch calibrator"
++DESCRIPTION = "Add touch calibrator script"
++HOMEPAGE = ""
++LICENSE = "CLOSED"
++
++inherit allarch
++
++SRC_URI = "file://touch_cal.png \
++           file://touch_cal_24x24.png \
++           file://touch_cal_48x48.png \
++           file://weston-touch-calibrator.sh \
++           "
++FILES:${PN} += " \
++/usr/share/icons/apps/touch_cal.png \
++/usr/share/icons/apps/touch_cal_24x24.png \
++/usr/share/icons/apps/touch_cal_48x48.png \
++/usr/bin/weston-touch-calibrator.sh \
++"
++
++do_install() {
++	install -d ${D}/usr/share/icons/apps
++	install -m 0755 ${WORKDIR}/touch_cal.png ${D}/usr/share/icons/apps
++	install -m 0755 ${WORKDIR}/touch_cal_24x24.png ${D}/usr/share/icons/apps
++	install -m 0755 ${WORKDIR}/touch_cal_48x48.png ${D}/usr/share/icons/apps
++	install -d ${D}/usr/bin
++	install -m 0755 ${WORKDIR}/weston-touch-calibrator.sh ${D}/usr/bin
++}
++
+-- 
+2.17.1
+

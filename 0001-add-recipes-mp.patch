@@ -1,0 +1,311 @@
+---
+ .../recipes-mp/mp-tools/mp-01/chromium.sh     |  4 +
+ .../mp-tools/mp-01/mp-log/default.log         |  3 +
+ .../mp-tools/mp-01/mp-log/default.py          | 85 +++++++++++++++++++
+ .../mp-tools/mp-01/mp-log/mp_result.py        | 77 +++++++++++++++++
+ meta-bsp/recipes-mp/mp-tools/mp-01/mp_sl      | 37 ++++++++
+ meta-bsp/recipes-mp/mp-tools/mp_01.bb         | 51 +++++++++++
+ 6 files changed, 257 insertions(+)
+ create mode 100644 meta-bsp/recipes-mp/mp-tools/mp-01/chromium.sh
+ create mode 100644 meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/default.log
+ create mode 100644 meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/default.py
+ create mode 100644 meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/mp_result.py
+ create mode 100644 meta-bsp/recipes-mp/mp-tools/mp-01/mp_sl
+ create mode 100644 meta-bsp/recipes-mp/mp-tools/mp_01.bb
+
+diff --git a/meta-bsp/recipes-mp/mp-tools/mp-01/chromium.sh b/meta-bsp/recipes-mp/mp-tools/mp-01/chromium.sh
+new file mode 100644
+index 0000000000..9c3494fb1d
+--- /dev/null
++++ b/meta-bsp/recipes-mp/mp-tools/mp-01/chromium.sh
+@@ -0,0 +1,4 @@
++#!/bin/sh
++
++/usr/bin/chromium --no-sandbox
++
+diff --git a/meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/default.log b/meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/default.log
+new file mode 100644
+index 0000000000..876e955ffd
+--- /dev/null
++++ b/meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/default.log
+@@ -0,0 +1,3 @@
++Do you want to do MP test?
++
++Please put mp-tools to microsd and insert it, then start MP test.
+diff --git a/meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/default.py b/meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/default.py
+new file mode 100644
+index 0000000000..d71008c76b
+--- /dev/null
++++ b/meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/default.py
+@@ -0,0 +1,85 @@
++#!/usr/bin/env python3
++
++import gi
++gi.require_version("Gtk","3.0")
++from gi.repository import Gtk
++
++
++class MPINFO(Gtk.Window):
++
++    def callback(self, widget, data=None):
++        print ("%s was pressed" % data)
++
++    def delete_event(self, widget, event, data=None):
++        # If you return FALSE in the "delete_event" signal handler,
++        # GTK will emit the "destroy" signal. Returning TRUE means
++        # you don't want the window to be destroyed.
++        # This is useful for popping up 'are you sure you want to quit?'
++        # type dialogs.
++        print ("delete event occurred")
++
++        # Change FALSE to TRUE and the main window will not be destroyed
++        # with a "delete_event".
++        return False
++
++    def destroy(self, widget, data=None):
++        print ("destroy signal occurred")
++        Gtk.main_quit()
++
++    def __init__(self):
++        # Set the window title
++        super().__init__(title="Mp-info")
++
++        # When the window is given the "detablelete_event" signal (this is given
++        # by the window manager, usually by the "close" option, or on the
++        # titlebar), we ask it to call the delete_event () function
++        # as defined above. The data passed to the callback
++        # function is NULL and is ignored in the callback function.
++        self.connect("delete_event", self.delete_event)
++
++        # Here we connect the "destroy" event to a signal handler.
++        # This event occurs when we call gtk_widget_destroy() on the window,
++        # or if we return FALSE in the "delete_event" callback.
++        self.connect("destroy", self.destroy)
++
++
++        # Sets the border width of the window.
++        self.set_border_width(20)
++        table = Gtk.Table(3, 1, True)
++        self.add(table)
++
++        fo = open("default.log","r+")
++        str = fo.read()
++
++        button = Gtk.Button(str)
++        button.connect("clicked", lambda w: Gtk.main_quit())
++        table.attach(button, 0, 1, 1, 2)
++        button.show()
++
++        fo.close
++
++        # This will cause the window to be destroyed by calling
++        # gtk_widget_destroy(window) when "clicked".  Again, the destroy
++        # signal could come from here, or the window manager.
++        #self.button.connect_object("clicked", gtk.Widget.destroy, self.window)
++
++        # This packs the button into the window (a GTK container).
++        #self.window.add(self.button)
++
++        # The final step is to display this newly created widget.
++        table.show()
++
++        # and the window
++        self.show()
++
++def main():
++        # All PyGTK applications must have a gtk.main(). Control ends here
++        # and waits for an event to occur (like a key press or mouse event).
++        Gtk.main()
++
++# If the program is run directly or passed as an argument to the python
++# interpreter then create a HelloWorld instance and show it
++if __name__ == "__main__":
++    MPINFO()
++    main()
++
+diff --git a/meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/mp_result.py b/meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/mp_result.py
+new file mode 100644
+index 0000000000..ac4d5cc980
+--- /dev/null
++++ b/meta-bsp/recipes-mp/mp-tools/mp-01/mp-log/mp_result.py
+@@ -0,0 +1,77 @@
++#!/usr/bin/env python3
++
++import gi
++gi.require_version("Gtk","3.0")
++from gi.repository import Gtk
++
++class Table(Gtk.Window):
++    # Our callback.
++    # The data passed to this method is printed to stdout
++    def callback(self, widget, data=None):
++        print ("%s was pressed" % data)
++
++    # This callback quits the program
++    def delete_event(self, widget, event, data=None):
++        Gtk.main_quit()
++        return False
++
++    def __init__(self):
++        # Set the window title
++        super().__init__(title="Table")
++
++        # Set a handler for delete_event that immediately
++        # exits GTK.
++        self.connect("delete_event", self.delete_event)
++
++        # Sets the border width of the window.
++        self.set_border_width(20)
++        self.set_size_request(500,550)
++
++        Scrolled = Gtk.ScrolledWindow()
++
++        num_lines = sum(1 for line in open('mp_result.log'))
++        table = Gtk.Table(num_lines+3, 3, True)
++
++        Scrolled.add_with_viewport(table)
++        self.add(Scrolled)
++
++        button = Gtk.Button("MP Test Result")
++        button.connect("clicked", self.callback, "line 0")
++        table.attach(button, 0, 3, 0, 1)
++        button.show()
++
++        fo = open("mp_result.log","r")
++        for k in range(1,num_lines+1):
++                line=fo.tell()
++                fo.seek(line)
++                str = fo.readline().split(" ")[0]
++                button = Gtk.Button(str)
++                button.connect("clicked", self.callback, str)
++                table.attach(button, 0, 1, k, k+1)
++                button.show()
++                fo.seek(line)
++                str = fo.readline().split(" ")[2].strip()
++                button = Gtk.Button(str)
++                button.connect("clicked", self.callback, str)
++                table.attach(button, 1, 3, k, k+1)
++                button.show()
++
++        fo.close
++        button = Gtk.Button("Quit")
++        button.connect("clicked", lambda w: Gtk.main_quit())
++        table.attach(button, 1, 2, num_lines+2, num_lines+3)
++        button.show()
++
++        table.show()
++        self.show()
++        self.show_all()
++
++def main():
++    Gtk.main()
++    return 0
++
++if __name__ == "__main__":
++    Table()
++    main()
++
++
+diff --git a/meta-bsp/recipes-mp/mp-tools/mp-01/mp_sl b/meta-bsp/recipes-mp/mp-tools/mp-01/mp_sl
+new file mode 100644
+index 0000000000..dce896d960
+--- /dev/null
++++ b/meta-bsp/recipes-mp/mp-tools/mp-01/mp_sl
+@@ -0,0 +1,37 @@
++#!/bin/sh
++result=0
++mp_folder=mp-tools
++file=mp-tools.py
++sd=mmcblk1p1
++
++if [ $(ls /dev/$sd 2> /dev/null | wc -l) = 0 ]; then
++	result=0
++else
++	if [ $(mount | grep "/dev/$sd on /" | wc -l) -gt 0 ]; then
++		file_path=$(mount | grep "/dev/$sd on /" | awk '{print $3}')
++	fi
++
++	if [ ! -z $file_path ]; then
++		if [ -d $file_path/$mp_folder ]; then
++		        if [ -f $file_path/$mp_folder/$file ]; then
++				result=1
++			fi
++        	fi
++	fi
++fi
++
++if [ $result -eq 0 ];then
++	cd /home/root/.mp-log 
++	if [ -f mp_result.log ]; then
++		echo "display log"
++		./mp_result.py
++	else
++	        echo "default mp"
++        	./default.py
++	fi
++else
++	echo "sdcard mp : $file_path/$mp_folder/"
++	cd $file_path/$mp_folder
++	./$file
++fi
++
+diff --git a/meta-bsp/recipes-mp/mp-tools/mp_01.bb b/meta-bsp/recipes-mp/mp-tools/mp_01.bb
+new file mode 100644
+index 0000000000..ae61609058
+--- /dev/null
++++ b/meta-bsp/recipes-mp/mp-tools/mp_01.bb
+@@ -0,0 +1,51 @@
++# Copyright (C) 2017-2018 RTX-3110
++
++SUMMARY = "Mp test"
++DESCRIPTION = "Add Mp tools for test"
++HOMEPAGE = ""
++LICENSE = "CLOSED"
++
++inherit allarch
++
++SRC_URI = "file://mp-log \
++	   file://mp.png \
++	   file://mp_24x24.png \
++	   file://mp_48x48.png \
++	   file://terminal.png \
++	   file://terminal_24x24.png \
++	   file://terminal_48x48.png \
++	   file://ffffff00_24x24.png \
++	   file://mp_sl \
++	   file://chromium.sh \
++	   "
++S = "${WORKDIR}/mp-log"
++
++FILES:${PN} += " \
++/usr/share/icons/apps/mp.png \
++/usr/share/icons/apps/mp_24x24.png \
++/usr/share/icons/apps/mp_48x48.png \
++/usr/share/icons/apps/terminal.png \
++/usr/share/icons/apps/terminal_24x24.png \
++/usr/share/icons/apps/terminal_48x48.png \
++/usr/share/icons/apps/ffffff00_24x24.png \
++/usr/bin/mp_sl \
++/usr/bin/chromium.sh \
++/home/root/.mp-log \
++"
++
++do_install() {
++	install -d ${D}/home/root/.mp-log
++	install -m 0755 ${S}/* ${D}/home/root/.mp-log/ 
++	install -d ${D}/usr/share/icons/apps
++	install -m 0755 ${WORKDIR}/mp.png ${D}/usr/share/icons/apps
++	install -m 0755 ${WORKDIR}/mp_24x24.png ${D}/usr/share/icons/apps
++	install -m 0755 ${WORKDIR}/mp_48x48.png ${D}/usr/share/icons/apps
++	install -m 0755 ${WORKDIR}/terminal.png ${D}/usr/share/icons/apps
++	install -m 0755 ${WORKDIR}/terminal_24x24.png ${D}/usr/share/icons/apps
++	install -m 0755 ${WORKDIR}/terminal_48x48.png ${D}/usr/share/icons/apps
++	install -m 0755 ${WORKDIR}/ffffff00_24x24.png ${D}/usr/share/icons/apps
++	install -d ${D}/usr/bin
++	install -m 0755 ${WORKDIR}/mp_sl ${D}/usr/bin
++	install -m 0755 ${WORKDIR}/chromium.sh ${D}/usr/bin
++}
++
+-- 
+2.17.1
+

@@ -1,0 +1,83 @@
+---
+ meta-bsp/conf/machine/imx6dlsabresd.conf      |  9 +++--
+ .../conf/machine/include/imx-base-extend.inc  |  3 +-
+ .../recipes-fsl/images/imx-image-abb.bb       | 33 +++++++++++++++++++
+ 3 files changed, 41 insertions(+), 4 deletions(-)
+ create mode 100644 meta-sdk/dynamic-layers/qt6-layer/recipes-fsl/images/imx-image-abb.bb
+
+diff --git a/meta-bsp/conf/machine/imx6dlsabresd.conf b/meta-bsp/conf/machine/imx6dlsabresd.conf
+index 91aad063c5..8f77572b6b 100644
+--- a/meta-bsp/conf/machine/imx6dlsabresd.conf
++++ b/meta-bsp/conf/machine/imx6dlsabresd.conf
+@@ -8,9 +8,12 @@ MACHINEOVERRIDES =. "mx6:mx6dl:"
+ 
+ require conf/machine/include/imx6sabresd-common.inc
+ 
+-KERNEL_DEVICETREE = "imx6dl-sabresd.dtb imx6dl-sabresd-ldo.dtb imx6dl-sabresd-hdcp.dtb \
+-                     imx6dl-sabresd-enetirq.dtb imx6dl-sabresd-btwifi.dtb \
+-                     imx6dl-sabresd-pcie.dtb imx6dl-sabresd-pcie-ep.dtb "
++#KERNEL_DEVICETREE = "imx6dl-sabresd.dtb imx6dl-sabresd-ldo.dtb imx6dl-sabresd-hdcp.dtb \
++#                     imx6dl-sabresd-enetirq.dtb imx6dl-sabresd-btwifi.dtb \
++#                     imx6dl-sabresd-pcie.dtb imx6dl-sabresd-pcie-ep.dtb "
++KERNEL_DEVICETREE = "imx6dl-rtx-adlink.dtb"
++
++KERNEL_IMAGETYPE = "uImage"
+ 
+ MACHINE_FEATURES:append = " optee"
+ 
+diff --git a/meta-bsp/conf/machine/include/imx-base-extend.inc b/meta-bsp/conf/machine/include/imx-base-extend.inc
+index bb1143a4ff..a7f30b2dcc 100644
+--- a/meta-bsp/conf/machine/include/imx-base-extend.inc
++++ b/meta-bsp/conf/machine/include/imx-base-extend.inc
+@@ -33,7 +33,8 @@ MACHINEOVERRIDES_EXTENDER:mx93:use-nxp-bsp  = "imx-generic-bsp:imx-nxp-bsp:imxdr
+ MACHINEOVERRIDES_EXTENDER_FILTER_OUT += "mx93"
+ MACHINE_SOCARCH_SUFFIX:mx93-nxp-bsp = "-mx93"
+ 
+-SOC_DEFAULT_IMAGE_FSTYPES = "wic.bmap wic.zst tar.zst"
++#SOC_DEFAULT_IMAGE_FSTYPES = "wic.bmap wic.zst tar.zst"
++SOC_DEFAULT_IMAGE_FSTYPES = "tar.bz2"
+ ZSTD_COMPRESSION_LEVEL ?= "-10"
+ 
+ SOC_DEFAULT_WKS_FILE:mx9-nxp-bsp ?= "imx-imx-boot-bootpart.wks.in"
+diff --git a/meta-sdk/dynamic-layers/qt6-layer/recipes-fsl/images/imx-image-abb.bb b/meta-sdk/dynamic-layers/qt6-layer/recipes-fsl/images/imx-image-abb.bb
+new file mode 100644
+index 0000000000..3c9c212112
+--- /dev/null
++++ b/meta-sdk/dynamic-layers/qt6-layer/recipes-fsl/images/imx-image-abb.bb
+@@ -0,0 +1,33 @@
++# Copyright (C) 2015 Freescale Semiconductor
++# Copyright 2017-2021 NXP
++# Released under the MIT license (see COPYING.MIT for the terms)
++
++require recipes-fsl/images/imx-image-multimedia.bb
++
++inherit populate_sdk_qt6_base
++
++TOOLCHAIN_HOST_TASK:append = " nativesdk-packagegroup-qt6-toolchain-host"
++TOOLCHAIN_TARGET_TASK:append = " packagegroup-qt6-modules"
++
++CONFLICT_DISTRO_FEATURES = "directfb"
++
++IMAGE_INSTALL += " \
++    packagegroup-imx-ml \
++    packagegroup-qt6-imx \
++    tzdata \
++    ${IMAGE_INSTALL_OPENCV} \
++    linux-firmware-rtl8812ae \
++    mp \
++    rtxm \
++    touchcal \
++    chromium-ozone-wayland \
++"
++
++IMAGE_INSTALL_OPENCV              = ""
++IMAGE_INSTALL_OPENCV:imxgpu       = "${IMAGE_INSTALL_OPENCV_PKGS}"
++IMAGE_INSTALL_OPENCV:mx93-nxp-bsp = "${IMAGE_INSTALL_OPENCV_PKGS}"
++IMAGE_INSTALL_OPENCV_PKGS = " \
++    opencv-apps \
++    opencv-samples \
++    python3-opencv \
++"
+-- 
+2.17.1
+

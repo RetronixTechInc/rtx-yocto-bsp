@@ -1,9 +1,9 @@
-## Building in Ubuntu 18.04
+## Building in Ubuntu 20.04
 i.MX Repo Manifest README 
 
 Essential Yocto Project host packages are:
 --------------------------------------------------------
-$: sudo apt-get install gawk wget git-core diffstat unzip texinfo gcc-multilib build-essential chrpath socat cpio python python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping python3-git python3-jinja2 libegl1-mesa libsdl1.2-dev pylint3 xterm gcc-arm-linux-gnueabihf
+$: sudo apt-get install gawk wget git-core diffstat unzip texinfo gcc-multilib build-essential chrpath socat cpio python python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping python3-git python3-jinja2 libegl1-mesa libsdl1.2-dev pylint3 xterm rsync curl zstd pzstd lz4c lz4 libssl-dev gcc-arm-linux-gnueabihf
 
 This repo is used to download manifests for i.MX BSP releases.
 
@@ -14,50 +14,60 @@ The branch will be based on the release type Linux or Android with release manif
 For example for i.MX Linux Yocto Project releases the branches will be imx_linux_<Yocto Project release> so imx_linux_rocko with
 all manifests tied to releases on rocko in this branch.
 
+
 To use this manifest repo, the 'repo' tool must be installed first.
 --------------------------------------------------------
 $: mkdir ~/bin
-$: curl http://commondatastorage.googleapis.com/git-repo-downloads/repo  > ~/bin/repo
+$: curl http://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
 $: chmod a+x ~/bin/repo
-$: PATH=${PATH}:~/bin
-
+$: export PATH=${PATH}:~/bin
 
 To excute 
 $: mkdir <release>
 $: cd <release>
-$: repo init -u https://github.com/RetronixTechInc/rtx-yocto-bsp.git -b <branch name> [ -m <release manifest>]
+$: repo init -u https://github.com/nxp-imx/imx-manifest -b <branch name> [ -m <release manifest>]
 
 Each branch will have detailed READMEs describing exact syntax.
 
-Examples
+Download ABB project patch file
+$: git clone https://github.com/RetronixTechInc/rtx-yocto-bsp -b <branch name>
+
+Examples:
 --------
-To download the Retronix_imx-5.4.70-2.3.0 i.MX6 release
-mkdir rtx-yocto-bsp
-cd rtx-yocto-bsp
-repo init -u https://github.com/RetronixTechInc/rtx-yocto-bsp.git -b iMX6Q_PICO_5.4.70 -m Retronix_imx-5.4.70-2.3.0.xml
+To download the imx-5.15.71-2.0.0 i.MX6 release
+mkdir abb-yocto-bsp
+cd abb-yocto-bsp
+repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-kirkstone -m imx-5.15.71-2.0.0.xml
 repo sync
 
+git clone https://github.com/RetronixTechInc/rtx-yocto-bsp -b iMX6DL_ABB_5.15 patch
+./patch/abb-project-patch.sh
+
+
 Setup the build folder for a BSP release:
------------------------------------------
+--------------------------------------------------------
 Note: The remaining instructions are for setting up a BSP release only. For setting
 up a demo, please see imx-manifest/README-<demo> for further instructions.
 
 $: [MACHINE=<machine>] [DISTRO=<distro>] source rtx-setup-release.sh -b bld-<backend>
 
-<machine> defaults to imx6q-ohga
+<machine> defaults to imx6dlsabresd
 
 <backend>   Graphics backend type
 xwayland    Wayland with X11 support - default distro
 wayland     Wayland
 
 Examples:
+--------
 - Setup for xwayland.
-$: DISTRO=fsl-imx-xwayland MACHINE=imx6q-ohga source sources/meta-rtx-arm/tool/rtx-setup-release.sh -b build_5470_xwayland
+$: DISTRO=fsl-imx-xwayland MACHINE=imx6dlsabresd source imx-setup-release.sh -b build
+
 
 Build an image:
----------------
+--------------------------------------------------------
 bitbake <image recipe>
 
 Examples:
-bitbake rtx-image-multimedia
- 
+--------
+bitbake imx-image-abb
+

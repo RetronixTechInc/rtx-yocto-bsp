@@ -1,0 +1,19 @@
+---
+ meta-bsp/recipes-core/systemd/systemd_%.bbappend | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/meta-bsp/recipes-core/systemd/systemd_%.bbappend b/meta-bsp/recipes-core/systemd/systemd_%.bbappend
+index 643e8e8a4c..e33a9fdc97 100644
+--- a/meta-bsp/recipes-core/systemd/systemd_%.bbappend
++++ b/meta-bsp/recipes-core/systemd/systemd_%.bbappend
+@@ -24,6 +24,7 @@ do_install:append () {
+         cat <<EOF >>${D}${sysconfdir}/udev/rules.d/touchscreen.rules
+ # i.MX specific touchscreen rules
+ SUBSYSTEM=="input", KERNEL=="event[0-9]*", ENV{ID_INPUT_TOUCHSCREEN}=="1", SYMLINK+="input/touchscreen0"
++SUBSYSTEM=="input", KERNEL=="event[0-9]*", ENV{ID_INPUT_TOUCHSCREEN}=="1", ENV{LIBINPUT_CALIBRATION_MATRIX}="1.051360 -0.003640 -0.030474 0.016130 1.112044 -0.074869"
+ EOF
+     fi
+ }
+-- 
+2.17.1
+
